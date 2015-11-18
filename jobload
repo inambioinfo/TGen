@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+print "Job Id\tUser\tMem Used\tV Mem\tWalltime\n";
+open(QSTAT_F, "qstat -ft |");
+while(<QSTAT_F>) {
+	chomp;
+	if(/Job Id: (\d+\[?\d+?\]?)\.master\.cm\.cluster/) {
+		print "$1\t";
+	}
+	elsif(/Job_Owner = (\w+)\@/) {
+		print "$1\t";
+	}
+	elsif(/resources_used.mem = (\d+)kb/){
+		my $mem = int(($1/1024)/1024);
+		print "$mem\t";
+	}
+	elsif(/resources_used.vmem = (\d+)kb/){
+		my $mem = int(($1/1024)/1024);
+		print "$mem\t";
+	}
+	elsif(/resources_used.walltime = (\d+:\d\d:\d\d)/) {
+		print "$1\n";
+	}
+}
+close(QSTAT_F);
+print "\n";
+=c
+
+my $pbs =`pbsnodes`;
+my @nodes = split "\n\n", $pbs;
+print "Node\tState\tnp\tncpus\tMemory\n";
+
+
+foreach my $node(@nodes){
+#	print "###$node###\n";
+	my @prop =split("\n", $node);
+	print "$prop[0]\t";
+	if($node =~ /state = (.*)/){
+		print "$1\t";
+	}
+	if($node =~ /np = (.*)/){
+                print "$1\t";
+        }
+	if($node =~ /ncpus=(\d+),/){
+		print "$1\t";
+	}
+	if($node =~ /physmem=(\d+)kb,/){
+		my $mem = int(($1 / 1024)/1024);
+		print $mem."GB\n";
+	}
+}

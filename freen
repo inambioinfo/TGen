@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+my $pbs =`pbsnodes`;
+my @nodes = split "\n\n", $pbs;
+if(defined $ARGV[0]){
+	print "    Node\tnp\tncpus\tMemory\tStatus\n";
+}
+my @arr;
+foreach my $node(@nodes){
+	my ($state, $np, $ncpus, $mem);
+	if($node =~ /login/){
+		next;
+	}
+	my @prop =split("\n", $node);
+	if($node =~ /state = (.*)/){
+		$state =$1;
+	}
+	if($node =~ /np = (.*)/){
+		$np =$1;
+	}
+	if($node =~ /ncpus=(\d+),/){
+		$ncpus =$1;
+	}
+	if($node =~ /physmem=(\d+)kb,/){
+		$mem = int(($1 / 1024)/1024);
+		$mem .= "GB";
+	}
+#	$state =~ s/job-exclusive/occupied/g;
+	$state =~ s/free/  free  /g;
+	push @arr, "$np\t$ncpus\t$mem\t$state";
+	if(defined $ARGV[0]){
+		print "$prop[0]\t$np\t$ncpus\t$mem\t$state\n";
+	}
+}
+print "\nnp\tncpus\tMemory\tStatus  \t# Nodes\n";
+my %counts;
+$counts{$_}++ for @arr;
+
+foreach (sort keys %counts){
+	print "$_\t$counts{$_}\n";
+}
